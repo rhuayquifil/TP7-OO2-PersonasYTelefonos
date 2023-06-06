@@ -5,10 +5,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
 import ar.unrn.domain.model.Persona;
+import ar.unrn.domain.model.ProxyArrayList;
 import ar.unrn.domain.model.Telefono;
 import ar.unrn.domain.portsout.Propiedades;
 
@@ -26,25 +26,31 @@ public class PersonaDao {
 	}
 
 	public Persona personaPorId(int id) {
-		String sql = "select p.nombre,t.numero " + "from personas p, telefonos t "
-				+ "where p.id = t.idpersona and p.id = ?";
+
+		String sql = "SELECT p.nombre FROM personas p WHERE p.id = ?";
 
 		try (Connection conn = obtenerConexion(); PreparedStatement statement = conn.prepareStatement(sql);) {
 
-			statement.setInt(1, id);
+			statement.setInt(1, id); // seteo el valor en el sql
 
 			ResultSet result = statement.executeQuery();
 
-			Set<Telefono> telefonos = new HashSet<Telefono>();
+			return obtenerPersona(id, result);
 
-			String nombrePersona = null;
-			while (result.next()) {
-				nombrePersona = result.getString(1);
-				telefonos.add(new Telefono(result.getString(2)));
-			}
-			return new Persona(id, nombrePersona, telefonos);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private Persona obtenerPersona(int id, ResultSet result) throws SQLException {
+		if (result.next()) {
+			String nombrePersona = result.getString(1);
+
+			Set<Telefono> proxyTelefonos = new ProxyArrayList(id, properties);
+
+			return new Persona(id, nombrePersona, proxyTelefonos);
+		}
+
+		throw new RuntimeException("No se encontró ninguna persona con el ID: " + id);
 	}
 }

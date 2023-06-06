@@ -20,4 +20,9 @@ public class Persona {
 	public String nombre() {
 		return nombre;
 	}
+
+	@Override
+	public String toString() {
+		return "Persona [id=" + id + ", nombre=" + nombre + ", telefonos=" + telefonos + "]";
+	}
 }
